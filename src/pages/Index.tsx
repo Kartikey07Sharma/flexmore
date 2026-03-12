@@ -4,8 +4,8 @@ import { ArrowRight, CheckCircle, Factory, Users, Award, Package } from "lucide-
 import { Button } from "@/components/ui/button";
 import PublicLayout from "@/components/PublicLayout";
 import ProductCard from "@/components/ProductCard";
-import { products, categories } from "@/data/products";
-import { blogPosts } from "@/data/blog";
+import { useFeaturedProducts, useCategories } from "@/hooks/use-products";
+import { useBlogPosts } from "@/hooks/use-blog";
 import heroImg from "@/assets/hero-manufacturing.jpg";
 import qualityImg from "@/assets/quality-control.jpg";
 
@@ -35,7 +35,9 @@ const whyChoose = [
 ];
 
 export default function Index() {
-  const featuredProducts = products.filter((p) => p.featured).slice(0, 4);
+  const { data: featuredProducts = [] } = useFeaturedProducts();
+  const { data: categories = [] } = useCategories();
+  const { data: blogPosts = [] } = useBlogPosts();
 
   return (
     <PublicLayout>
@@ -71,15 +73,11 @@ export default function Index() {
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="grid md:grid-cols-2 gap-12 items-center">
             <motion.div variants={fadeUp}>
               <p className="text-sm font-semibold text-secondary-foreground/60 uppercase tracking-wider mb-2 font-body">About Flexmore</p>
-              <h2 className="font-heading text-3xl md:text-4xl font-bold text-foreground mb-6">
-                Trusted B2B Manufacturer Since 2014
-              </h2>
+              <h2 className="font-heading text-3xl md:text-4xl font-bold text-foreground mb-6">Trusted B2B Manufacturer Since 2014</h2>
               <p className="text-muted-foreground leading-relaxed mb-6 font-body">
                 Based in Selaqui Industrial Area, Dehradun, Flexmore is a leading manufacturer of elastic cords, mask dori, textile threads, and industrial elastic materials. We serve garment manufacturers, medical supply companies, and industrial clients across India and globally.
               </p>
-              <Button asChild variant="outline">
-                <Link to="/about">Learn More About Us</Link>
-              </Button>
+              <Button asChild variant="outline"><Link to="/about">Learn More About Us</Link></Button>
             </motion.div>
             <motion.div variants={fadeUp}>
               <img src={qualityImg} alt="Quality control at Flexmore" className="rounded-lg shadow-lg w-full" loading="lazy" />
@@ -98,10 +96,7 @@ export default function Index() {
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
             {categories.map((cat) => (
               <motion.div key={cat.id} variants={fadeUp}>
-                <Link
-                  to={`/products?category=${cat.slug}`}
-                  className="block bg-card p-6 rounded-lg border border-border text-center hover:shadow-md hover:border-secondary transition-all"
-                >
+                <Link to={`/products?category=${cat.slug}`} className="block bg-card p-6 rounded-lg border border-border text-center hover:shadow-md hover:border-secondary transition-all">
                   <Package className="w-8 h-8 mx-auto mb-3 text-primary" />
                   <h3 className="font-heading font-semibold text-sm text-foreground">{cat.name}</h3>
                 </Link>
@@ -124,9 +119,7 @@ export default function Index() {
             ))}
           </div>
           <div className="text-center mt-10">
-            <Button asChild variant="outline" size="lg">
-              <Link to="/products">View All Products</Link>
-            </Button>
+            <Button asChild variant="outline" size="lg"><Link to="/products">View All Products</Link></Button>
           </div>
         </div>
       </section>
@@ -166,9 +159,7 @@ export default function Index() {
             <h2 className="font-heading text-3xl md:text-4xl font-bold text-primary-foreground mb-4">Ready to Partner with Flexmore?</h2>
             <p className="text-primary-foreground/80 mb-8 max-w-xl mx-auto font-body">Get customized pricing for your bulk manufacturing needs. Our team is ready to assist you.</p>
             <div className="flex flex-wrap justify-center gap-4">
-              <Button asChild size="lg" variant="secondary">
-                <Link to="/quote">Request Quote</Link>
-              </Button>
+              <Button asChild size="lg" variant="secondary"><Link to="/quote">Request Quote</Link></Button>
               <Button asChild size="lg" variant="outline" className="border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10">
                 <Link to="/contact">Contact Us</Link>
               </Button>
@@ -188,7 +179,7 @@ export default function Index() {
             {blogPosts.slice(0, 3).map((post) => (
               <Link key={post.id} to={`/blog/${post.slug}`} className="group bg-background rounded-lg overflow-hidden border border-border hover:shadow-md transition-shadow">
                 <div className="p-6">
-                  <p className="text-xs text-muted-foreground font-body mb-2">{post.createdAt}</p>
+                  <p className="text-xs text-muted-foreground font-body mb-2">{new Date(post.created_at).toLocaleDateString()}</p>
                   <h3 className="font-heading font-semibold text-foreground mb-2 group-hover:text-primary transition-colors">{post.title}</h3>
                   <p className="text-sm text-muted-foreground font-body line-clamp-3">{post.excerpt}</p>
                 </div>

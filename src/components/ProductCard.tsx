@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import type { Product } from "@/data/products";
+import type { Product } from "@/hooks/use-products";
 import productsElasticImg from "@/assets/products-elastic.jpg";
 
 interface Props {
@@ -19,7 +19,7 @@ export default function ProductCard({ product }: Props) {
       </div>
       <div className="p-5">
         <h3 className="font-heading font-semibold text-lg text-foreground mb-2">{product.name}</h3>
-        <p className="text-sm text-muted-foreground mb-4 line-clamp-2">{product.shortDescription}</p>
+        <p className="text-sm text-muted-foreground mb-4 line-clamp-2">{product.short_description}</p>
         <Link
           to={`/products/${product.slug}`}
           className="inline-flex items-center text-sm font-medium text-primary hover:text-navy-light transition-colors"
