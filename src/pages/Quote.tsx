@@ -5,24 +5,30 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import PublicLayout from "@/components/PublicLayout";
-import { products } from "@/data/products";
-import { addInquiry } from "@/data/inquiries";
+import { useProducts } from "@/hooks/use-products";
+import { useSubmitInquiry } from "@/hooks/use-inquiries";
 
 export default function Quote() {
   const { toast } = useToast();
+  const { data: products = [] } = useProducts();
+  const submitInquiry = useSubmitInquiry();
   const [form, setForm] = useState({
     name: "", company: "", email: "", phone: "", product: "", quantity: "", message: "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name.trim() || !form.email.trim() || !form.product) {
       toast({ title: "Please fill all required fields", variant: "destructive" });
       return;
     }
-    addInquiry(form);
-    toast({ title: "Quote request submitted!", description: "Our team will respond within 24 hours." });
-    setForm({ name: "", company: "", email: "", phone: "", product: "", quantity: "", message: "" });
+    try {
+      await submitInquiry.mutateAsync(form);
+      toast({ title: "Quote request submitted!", description: "Our team will respond within 24 hours." });
+      setForm({ name: "", company: "", email: "", phone: "", product: "", quantity: "", message: "" });
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
   };
 
   return (
@@ -77,7 +83,9 @@ export default function Quote() {
                 <label className="text-sm font-medium text-foreground font-body mb-1 block">Message</label>
                 <Textarea rows={5} placeholder="Describe your requirements..." value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} className="font-body" />
               </div>
-              <Button type="submit" size="lg" className="w-full">Submit Quote Request</Button>
+              <Button type="submit" size="lg" className="w-full" disabled={submitInquiry.isPending}>
+                {submitInquiry.isPending ? "Submitting..." : "Submit Quote Request"}
+              </Button>
             </form>
           </div>
         </div>

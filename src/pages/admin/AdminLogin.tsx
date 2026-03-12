@@ -6,18 +6,28 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function AdminLogin() {
-  const { login } = useAuth();
+  const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Redirect if already logged in
+  if (isAuthenticated) {
+    navigate("/admin", { replace: true });
+    return null;
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (login(email, password)) {
-      navigate("/admin");
+    setLoading(true);
+    const { error } = await login(email, password);
+    setLoading(false);
+    if (error) {
+      toast({ title: "Login failed", description: error, variant: "destructive" });
     } else {
-      toast({ title: "Invalid credentials", description: "Use admin@flexmore.com / admin123", variant: "destructive" });
+      navigate("/admin");
     }
   };
 
@@ -37,9 +47,10 @@ export default function AdminLogin() {
             <label className="text-sm font-medium text-foreground font-body block mb-1">Password</label>
             <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" className="font-body" />
           </div>
-          <Button type="submit" className="w-full" size="lg">Sign In</Button>
+          <Button type="submit" className="w-full" size="lg" disabled={loading}>
+            {loading ? "Signing in..." : "Sign In"}
+          </Button>
         </form>
-        <p className="text-xs text-muted-foreground text-center mt-6 font-body">Demo: admin@flexmore.com / admin123</p>
       </div>
     </div>
   );

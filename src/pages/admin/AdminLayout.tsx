@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { Link, useLocation, Navigate } from "react-router-dom";
-import { LayoutDashboard, Package, FolderOpen, FileText, MessageSquare, FileDown, Settings, LogOut } from "lucide-react";
+import { LayoutDashboard, Package, FolderOpen, FileText, MessageSquare, FileDown, Settings, LogOut, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 const navItems = [
@@ -14,14 +14,21 @@ const navItems = [
 ];
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, isAdmin, isLoading, logout } = useAuth();
   const location = useLocation();
 
-  if (!isAuthenticated) return <Navigate to="/admin/login" replace />;
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-muted">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated || !isAdmin) return <Navigate to="/admin/login" replace />;
 
   return (
     <div className="min-h-screen flex bg-muted">
-      {/* Sidebar */}
       <aside className="w-64 bg-primary text-primary-foreground flex flex-col shrink-0 hidden md:flex">
         <div className="p-6 border-b border-primary-foreground/10">
           <Link to="/" className="font-heading text-xl font-bold">Flexmore</Link>
@@ -50,10 +57,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           </button>
         </div>
       </aside>
-
-      {/* Main content */}
       <div className="flex-1 flex flex-col min-h-screen overflow-auto">
-        {/* Mobile header */}
         <header className="md:hidden bg-primary text-primary-foreground p-4 flex items-center justify-between">
           <span className="font-heading font-bold">Flexmore Admin</span>
           <button onClick={logout} className="text-sm font-body opacity-60">Logout</button>

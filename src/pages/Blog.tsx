@@ -1,11 +1,13 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import PublicLayout from "@/components/PublicLayout";
-import { blogPosts } from "@/data/blog";
+import { useBlogPosts } from "@/hooks/use-blog";
 
 const fadeUp = { hidden: { opacity: 0, y: 30 }, visible: { opacity: 1, y: 0, transition: { duration: 0.6 } } };
 
 export default function Blog() {
+  const { data: blogPosts = [], isLoading } = useBlogPosts();
+
   return (
     <PublicLayout>
       <section className="bg-primary py-16 md:py-24">
@@ -17,20 +19,24 @@ export default function Blog() {
 
       <section className="section-padding">
         <div className="container-wide">
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {blogPosts.map((post) => (
-              <motion.div key={post.id} initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>
-                <Link to={`/blog/${post.slug}`} className="group block bg-card rounded-lg overflow-hidden border border-border hover:shadow-md transition-shadow h-full">
-                  <div className="p-6 flex flex-col h-full">
-                    <p className="text-xs text-muted-foreground font-body mb-2">{post.createdAt} · {post.author}</p>
-                    <h2 className="font-heading text-xl font-semibold text-foreground mb-3 group-hover:text-primary transition-colors">{post.title}</h2>
-                    <p className="text-sm text-muted-foreground font-body flex-1">{post.excerpt}</p>
-                    <span className="text-sm font-medium text-primary mt-4 inline-block font-body">Read More →</span>
-                  </div>
-                </Link>
-              </motion.div>
-            ))}
-          </div>
+          {isLoading ? (
+            <p className="text-center text-muted-foreground font-body py-12">Loading articles...</p>
+          ) : (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {blogPosts.map((post) => (
+                <motion.div key={post.id} initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>
+                  <Link to={`/blog/${post.slug}`} className="group block bg-card rounded-lg overflow-hidden border border-border hover:shadow-md transition-shadow h-full">
+                    <div className="p-6 flex flex-col h-full">
+                      <p className="text-xs text-muted-foreground font-body mb-2">{new Date(post.created_at).toLocaleDateString()} · {post.author}</p>
+                      <h2 className="font-heading text-xl font-semibold text-foreground mb-3 group-hover:text-primary transition-colors">{post.title}</h2>
+                      <p className="text-sm text-muted-foreground font-body flex-1">{post.excerpt}</p>
+                      <span className="text-sm font-medium text-primary mt-4 inline-block font-body">Read More →</span>
+                    </div>
+                  </Link>
+                </motion.div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
     </PublicLayout>

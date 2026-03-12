@@ -6,45 +6,60 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import AdminLayout from "./AdminLayout";
-import { products as initialProducts, categories, type Product } from "@/data/products";
+import { useProducts, useCategories, useCreateProduct, useUpdateProduct, useDeleteProduct, type Product } from "@/hooks/use-products";
 
 export default function AdminProducts() {
   const { toast } = useToast();
-  const [productList, setProductList] = useState<Product[]>(initialProducts);
+  const { data: productList = [], isLoading } = useProducts();
+  const { data: categories = [] } = useCategories();
+  const createProduct = useCreateProduct();
+  const updateProduct = useUpdateProduct();
+  const deleteProduct = useDeleteProduct();
   const [editProduct, setEditProduct] = useState<Product | null>(null);
   const [isOpen, setIsOpen] = useState(false);
-  const [form, setForm] = useState({ name: "", slug: "", categoryId: "", description: "", shortDescription: "", material: "" });
+  const [form, setForm] = useState({ name: "", slug: "", category_id: "", description: "", short_description: "", material: "" });
 
   const openNew = () => {
     setEditProduct(null);
-    setForm({ name: "", slug: "", categoryId: categories[0]?.id || "", description: "", shortDescription: "", material: "" });
+    setForm({ name: "", slug: "", category_id: categories[0]?.id || "", description: "", short_description: "", material: "" });
     setIsOpen(true);
   };
 
   const openEdit = (p: Product) => {
     setEditProduct(p);
-    setForm({ name: p.name, slug: p.slug, categoryId: p.categoryId, description: p.description, shortDescription: p.shortDescription, material: p.material });
+    setForm({ name: p.name, slug: p.slug, category_id: p.category_id || "", description: p.description, short_description: p.short_description, material: p.material });
     setIsOpen(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.name.trim()) { toast({ title: "Product name required", variant: "destructive" }); return; }
-    if (editProduct) {
-      setProductList((prev) => prev.map((p) => p.id === editProduct.id ? { ...p, ...form } : p));
-      toast({ title: "Product updated" });
-    } else {
-      const newP: Product = {
-        id: Date.now().toString(), ...form, applications: [], specifications: {}, colors: [], images: [], featured: false,
-      };
-      setProductList((prev) => [...prev, newP]);
-      toast({ title: "Product created" });
+    try {
+      if (editProduct) {
+        await updateProduct.mutateAsync({ id: editProduct.id, ...form });
+        toast({ title: "Product updated" });
+      } else {
+        await createProduct.mutateAsync({
+          ...form,
+          applications: [],
+          specifications: {},
+          colors: [],
+          featured: false,
+        });
+        toast({ title: "Product created" });
+      }
+      setIsOpen(false);
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
     }
-    setIsOpen(false);
   };
 
-  const handleDelete = (id: string) => {
-    setProductList((prev) => prev.filter((p) => p.id !== id));
-    toast({ title: "Product deleted" });
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteProduct.mutateAsync(id);
+      toast({ title: "Product deleted" });
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
   };
 
   return (
@@ -60,13 +75,15 @@ export default function AdminProducts() {
             <div className="space-y-4 mt-4">
               <Input placeholder="Product Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value, slug: e.target.value.toLowerCase().replace(/\s+/g, '-') })} className="font-body" />
               <Input placeholder="Slug" value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} className="font-body" />
-              <select value={form.categoryId} onChange={(e) => setForm({ ...form, categoryId: e.target.value })} className="w-full border border-border rounded-md p-2 text-sm font-body bg-background">
+              <select value={form.category_id} onChange={(e) => setForm({ ...form, category_id: e.target.value })} className="w-full border border-border rounded-md p-2 text-sm font-body bg-background">
                 {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
               <Input placeholder="Material" value={form.material} onChange={(e) => setForm({ ...form, material: e.target.value })} className="font-body" />
-              <Textarea placeholder="Short Description" value={form.shortDescription} onChange={(e) => setForm({ ...form, shortDescription: e.target.value })} className="font-body" rows={2} />
+              <Textarea placeholder="Short Description" value={form.short_description} onChange={(e) => setForm({ ...form, short_description: e.target.value })} className="font-body" rows={2} />
               <Textarea placeholder="Full Description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="font-body" rows={4} />
-              <Button onClick={handleSave} className="w-full">{editProduct ? "Update" : "Create"} Product</Button>
+              <Button onClick={handleSave} className="w-full" disabled={createProduct.isPending || updateProduct.isPending}>
+                {editProduct ? "Update" : "Create"} Product
+              </Button>
             </div>
           </DialogContent>
         </Dialog>
@@ -83,10 +100,12 @@ export default function AdminProducts() {
             </tr>
           </thead>
           <tbody>
-            {productList.map((p) => (
+            {isLoading ? (
+              <tr><td colSpan={4} className="p-8 text-center text-muted-foreground font-body">Loading...</td></tr>
+            ) : productList.map((p) => (
               <tr key={p.id} className="border-b border-border/50">
                 <td className="p-4 text-sm text-foreground font-body font-medium">{p.name}</td>
-                <td className="p-4 text-sm text-muted-foreground font-body">{categories.find((c) => c.id === p.categoryId)?.name}</td>
+                <td className="p-4 text-sm text-muted-foreground font-body">{categories.find((c) => c.id === p.category_id)?.name}</td>
                 <td className="p-4 text-sm text-muted-foreground font-body">{p.material}</td>
                 <td className="p-4 text-right">
                   <Button variant="ghost" size="sm" onClick={() => openEdit(p)}><Edit className="w-4 h-4" /></Button>
