@@ -6,29 +6,35 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import AdminLayout from "./AdminLayout";
-import { blogPosts as initialPosts, type BlogPost } from "@/data/blog";
+import { useBlogPosts, useCreateBlogPost, useDeleteBlogPost } from "@/hooks/use-blog";
 
 export default function AdminBlog() {
   const { toast } = useToast();
-  const [posts, setPosts] = useState<BlogPost[]>(initialPosts);
+  const { data: posts = [], isLoading } = useBlogPosts();
+  const createPost = useCreateBlogPost();
+  const deletePost = useDeleteBlogPost();
   const [isOpen, setIsOpen] = useState(false);
   const [form, setForm] = useState({ title: "", slug: "", excerpt: "", content: "" });
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (!form.title.trim()) { toast({ title: "Title required", variant: "destructive" }); return; }
-    const newPost: BlogPost = {
-      id: Date.now().toString(), ...form, image: "/placeholder.svg",
-      createdAt: new Date().toISOString().split('T')[0], author: "Admin",
-    };
-    setPosts((prev) => [newPost, ...prev]);
-    setIsOpen(false);
-    setForm({ title: "", slug: "", excerpt: "", content: "" });
-    toast({ title: "Blog post created" });
+    try {
+      await createPost.mutateAsync(form);
+      setIsOpen(false);
+      setForm({ title: "", slug: "", excerpt: "", content: "" });
+      toast({ title: "Blog post created" });
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
   };
 
-  const handleDelete = (id: string) => {
-    setPosts((prev) => prev.filter((p) => p.id !== id));
-    toast({ title: "Blog post deleted" });
+  const handleDelete = async (id: string) => {
+    try {
+      await deletePost.mutateAsync(id);
+      toast({ title: "Blog post deleted" });
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
   };
 
   return (
@@ -46,7 +52,7 @@ export default function AdminBlog() {
               <Input placeholder="Slug" value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} className="font-body" />
               <Textarea placeholder="Excerpt" value={form.excerpt} onChange={(e) => setForm({ ...form, excerpt: e.target.value })} className="font-body" rows={2} />
               <Textarea placeholder="Content" value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} className="font-body" rows={6} />
-              <Button onClick={handleCreate} className="w-full">Publish</Button>
+              <Button onClick={handleCreate} className="w-full" disabled={createPost.isPending}>Publish</Button>
             </div>
           </DialogContent>
         </Dialog>
@@ -62,10 +68,12 @@ export default function AdminBlog() {
             </tr>
           </thead>
           <tbody>
-            {posts.map((p) => (
+            {isLoading ? (
+              <tr><td colSpan={3} className="p-8 text-center text-muted-foreground font-body">Loading...</td></tr>
+            ) : posts.map((p) => (
               <tr key={p.id} className="border-b border-border/50">
                 <td className="p-4 text-sm text-foreground font-body font-medium">{p.title}</td>
-                <td className="p-4 text-sm text-muted-foreground font-body">{p.createdAt}</td>
+                <td className="p-4 text-sm text-muted-foreground font-body">{new Date(p.created_at).toLocaleDateString()}</td>
                 <td className="p-4 text-right">
                   <Button variant="ghost" size="sm" onClick={() => handleDelete(p.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
                 </td>
