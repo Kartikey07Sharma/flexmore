@@ -31,7 +31,7 @@ export default function ProductDetail() {
   }
 
   const category = categories.find((c) => c.id === product.category_id);
-  const mainImage = images.length > 0 ? images[0].image_url : productsElasticImg;
+  const mainImage = images.length > 0 ? images[0].url : productsElasticImg;
   const specs = (product.specifications || {}) as Record<string, string>;
 
   return (
@@ -50,7 +50,7 @@ export default function ProductDetail() {
                 <div className="grid grid-cols-4 gap-2">
                   {images.slice(1).map((img) => (
                     <div key={img.id} className="aspect-square rounded overflow-hidden border border-border">
-                      <img src={img.image_url} alt="" className="w-full h-full object-cover" />
+                      <img src={img.url} alt="" className="w-full h-full object-cover" />
                     </div>
                   ))}
                 </div>
