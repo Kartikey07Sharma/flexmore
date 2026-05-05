@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useToast } from "@/hooks/use-toast";
 import AdminLayout from "./AdminLayout";
 import { useProducts, useCategories, useCreateProduct, useUpdateProduct, useDeleteProduct, type Product } from "@/hooks/use-products";
+import { ImageUpload } from "@/components/ImageUpload";
 
 export default function AdminProducts() {
   const { toast } = useToast();
@@ -17,17 +18,17 @@ export default function AdminProducts() {
   const deleteProduct = useDeleteProduct();
   const [editProduct, setEditProduct] = useState<Product | null>(null);
   const [isOpen, setIsOpen] = useState(false);
-  const [form, setForm] = useState({ name: "", slug: "", category_id: "", description: "", short_description: "", material: "" });
+  const [form, setForm] = useState({ name: "", slug: "", category_id: "", description: "", short_description: "", material: "", primary_image: "" as string | null });
 
   const openNew = () => {
     setEditProduct(null);
-    setForm({ name: "", slug: "", category_id: categories[0]?.id || "", description: "", short_description: "", material: "" });
+    setForm({ name: "", slug: "", category_id: categories[0]?.id || "", description: "", short_description: "", material: "", primary_image: "" });
     setIsOpen(true);
   };
 
   const openEdit = (p: Product) => {
     setEditProduct(p);
-    setForm({ name: p.name, slug: p.slug, category_id: p.category_id || "", description: p.description, short_description: p.short_description, material: p.material });
+    setForm({ name: p.name, slug: p.slug, category_id: p.category_id || "", description: p.description, short_description: p.short_description, material: p.material || "", primary_image: p.primary_image || "" });
     setIsOpen(true);
   };
 
@@ -81,6 +82,10 @@ export default function AdminProducts() {
               <Input placeholder="Material" value={form.material} onChange={(e) => setForm({ ...form, material: e.target.value })} className="font-body" />
               <Textarea placeholder="Short Description" value={form.short_description} onChange={(e) => setForm({ ...form, short_description: e.target.value })} className="font-body" rows={2} />
               <Textarea placeholder="Full Description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="font-body" rows={4} />
+              <div>
+                <label className="text-sm font-medium text-foreground font-body block mb-2">Primary image</label>
+                <ImageUpload bucket="product-images" value={form.primary_image} onChange={(v) => setForm({ ...form, primary_image: v || "" })} />
+              </div>
               <Button onClick={handleSave} className="w-full" disabled={createProduct.isPending || updateProduct.isPending}>
                 {editProduct ? "Update" : "Create"} Product
               </Button>

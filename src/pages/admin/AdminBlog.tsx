@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useToast } from "@/hooks/use-toast";
 import AdminLayout from "./AdminLayout";
 import { useBlogPosts, useCreateBlogPost, useDeleteBlogPost } from "@/hooks/use-blog";
+import { ImageUpload } from "@/components/ImageUpload";
 
 export default function AdminBlog() {
   const { toast } = useToast();
@@ -14,14 +15,14 @@ export default function AdminBlog() {
   const createPost = useCreateBlogPost();
   const deletePost = useDeleteBlogPost();
   const [isOpen, setIsOpen] = useState(false);
-  const [form, setForm] = useState({ title: "", slug: "", excerpt: "", content: "" });
+  const [form, setForm] = useState({ title: "", slug: "", excerpt: "", content: "", image: "" as string | null });
 
   const handleCreate = async () => {
     if (!form.title.trim()) { toast({ title: "Title required", variant: "destructive" }); return; }
     try {
       await createPost.mutateAsync(form);
       setIsOpen(false);
-      setForm({ title: "", slug: "", excerpt: "", content: "" });
+      setForm({ title: "", slug: "", excerpt: "", content: "", image: "" });
       toast({ title: "Blog post created" });
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
@@ -52,6 +53,10 @@ export default function AdminBlog() {
               <Input placeholder="Slug" value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} className="font-body" />
               <Textarea placeholder="Excerpt" value={form.excerpt} onChange={(e) => setForm({ ...form, excerpt: e.target.value })} className="font-body" rows={2} />
               <Textarea placeholder="Content" value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} className="font-body" rows={6} />
+              <div>
+                <label className="text-sm font-medium text-foreground font-body block mb-2">Cover image</label>
+                <ImageUpload bucket="blog-images" value={form.image} onChange={(v) => setForm({ ...form, image: v || "" })} />
+              </div>
               <Button onClick={handleCreate} className="w-full" disabled={createPost.isPending}>Publish</Button>
             </div>
           </DialogContent>
