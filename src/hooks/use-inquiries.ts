@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api";
 
 export interface Inquiry {
   id: string;
@@ -10,28 +10,26 @@ export interface Inquiry {
   product: string;
   quantity: string;
   message: string;
+  status?: string;
   created_at: string;
 }
 
 export function useInquiries() {
   return useQuery({
     queryKey: ["inquiries"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("inquiries").select("*").order("created_at", { ascending: false });
-      if (error) throw error;
-      return data as Inquiry[];
-    },
+    queryFn: () => api<Inquiry[]>("/api/inquiries"),
   });
 }
 
 export function useSubmitInquiry() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (inquiry: Omit<Inquiry, "id" | "created_at">) => {
-      const { data, error } = await supabase.from("inquiries").insert(inquiry).select().single();
-      if (error) throw error;
-      return data;
-    },
+    mutationFn: (inquiry: Omit<Inquiry, "id" | "created_at" | "status">) =>
+      api<Inquiry>("/api/inquiries", {
+        method: "POST",
+        body: JSON.stringify(inquiry),
+        auth: false,
+      }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["inquiries"] }),
   });
 }
