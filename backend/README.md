@@ -1,8 +1,8 @@
 # Flexmore Backend (Node.js + Express + PostgreSQL)
 
-A standalone REST API for the Flexmore website. This runs **outside** of Lovable — deploy it to your own host (Render, Railway, Fly.io, a VPS, etc.).
+A standalone REST API for the Flexmore website. The frontend in this repo is now wired to call this backend (via `VITE_API_URL`). Deploy this folder to your own host (Render, Railway, Fly.io, a VPS, etc.) and point `VITE_API_URL` at it.
 
-> ⚠️ The Lovable preview keeps using Lovable Cloud (Supabase). This `backend/` folder is a separate, optional Node.js implementation you can host yourself.
+> The frontend reads `VITE_API_URL` from `.env.local`. See `/.env.example` at the repo root.
 
 ## Stack
 

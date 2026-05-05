@@ -4,6 +4,7 @@ import { query } from '../db/pool.js';
 import { asyncHandler, HttpError } from '../middleware/error.js';
 import { validate } from '../middleware/validate.js';
 import { requireAuth, requireAdmin } from '../middleware/auth.js';
+import { sendInquiryNotification } from '../lib/mailer.js';
 
 const router = Router();
 
@@ -28,6 +29,8 @@ router.post(
        VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
       [b.name, b.email, b.phone || null, b.company || null, b.product || null, b.quantity || null, b.message || null]
     );
+    // Fire-and-forget email notification
+    sendInquiryNotification(rows[0]).catch(() => {});
     res.status(201).json(rows[0]);
   })
 );

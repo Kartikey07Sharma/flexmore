@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api";
 
 export interface BlogPost {
   id: string;
@@ -9,6 +9,7 @@ export interface BlogPost {
   content: string;
   image: string;
   author: string;
+  published?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -16,22 +17,14 @@ export interface BlogPost {
 export function useBlogPosts() {
   return useQuery({
     queryKey: ["blog-posts"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("blog_posts").select("*").order("created_at", { ascending: false });
-      if (error) throw error;
-      return data as BlogPost[];
-    },
+    queryFn: () => api<BlogPost[]>("/api/blog", { auth: false }),
   });
 }
 
 export function useBlogPost(slug: string) {
   return useQuery({
     queryKey: ["blog-post", slug],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("blog_posts").select("*").eq("slug", slug).single();
-      if (error) throw error;
-      return data as BlogPost;
-    },
+    queryFn: () => api<BlogPost>(`/api/blog/${slug}`, { auth: false }),
     enabled: !!slug,
   });
 }
@@ -39,11 +32,8 @@ export function useBlogPost(slug: string) {
 export function useCreateBlogPost() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (post: { title: string; slug: string; excerpt: string; content: string; image?: string }) => {
-      const { data, error } = await supabase.from("blog_posts").insert(post).select().single();
-      if (error) throw error;
-      return data;
-    },
+    mutationFn: (post: Partial<BlogPost>) =>
+      api<BlogPost>("/api/blog", { method: "POST", body: JSON.stringify(post) }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["blog-posts"] }),
   });
 }
@@ -51,10 +41,7 @@ export function useCreateBlogPost() {
 export function useDeleteBlogPost() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("blog_posts").delete().eq("id", id);
-      if (error) throw error;
-    },
+    mutationFn: (id: string) => api<void>(`/api/blog/${id}`, { method: "DELETE" }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["blog-posts"] }),
   });
 }

@@ -1,33 +1,34 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Trash2, Download, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import AdminLayout from "./AdminLayout";
-import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { api, apiUrl } from "@/lib/api";
+import { useUpload } from "@/hooks/use-upload";
+
+interface Catalogue {
+  id: string;
+  title: string;
+  file_url: string;
+  file_size?: number;
+  created_at: string;
+}
 
 export default function AdminCatalogue() {
   const { toast } = useToast();
   const qc = useQueryClient();
-  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const { upload, uploading } = useUpload();
+  const [busy, setBusy] = useState(false);
 
   const { data: catalogues = [], isLoading } = useQuery({
     queryKey: ["catalogues"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("catalogues").select("*").order("uploaded_at", { ascending: false });
-      if (error) throw error;
-      return data;
-    },
+    queryFn: () => api<Catalogue[]>("/api/catalogues", { auth: false }),
   });
 
-  const deleteCatalogue = useMutation({
-    mutationFn: async ({ id, file_url }: { id: string; file_url: string }) => {
-      // Extract path from URL
-      const path = file_url.split("/catalogues/")[1];
-      if (path) await supabase.storage.from("catalogues").remove([path]);
-      const { error } = await supabase.from("catalogues").delete().eq("id", id);
-      if (error) throw error;
-    },
+  const deleteCat = useMutation({
+    mutationFn: (id: string) => api<void>(`/api/catalogues/${id}`, { method: "DELETE" }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["catalogues"] }),
   });
 
@@ -38,20 +39,20 @@ export default function AdminCatalogue() {
       toast({ title: "Only PDF files allowed", variant: "destructive" });
       return;
     }
-    setUploading(true);
+    setBusy(true);
     try {
-      const fileName = `${Date.now()}-${file.name}`;
-      const { error: uploadError } = await supabase.storage.from("catalogues").upload(fileName, file);
-      if (uploadError) throw uploadError;
-      const { data: { publicUrl } } = supabase.storage.from("catalogues").getPublicUrl(fileName);
-      const { error: dbError } = await supabase.from("catalogues").insert({ file_url: publicUrl, file_name: file.name });
-      if (dbError) throw dbError;
+      const { url, size } = await upload(file, "catalogues");
+      await api("/api/catalogues", {
+        method: "POST",
+        body: JSON.stringify({ title: file.name, file_url: apiUrl(url), file_size: size }),
+      });
       qc.invalidateQueries({ queryKey: ["catalogues"] });
       toast({ title: "Catalogue uploaded!" });
     } catch (err: any) {
       toast({ title: "Upload failed", description: err.message, variant: "destructive" });
     } finally {
-      setUploading(false);
+      setBusy(false);
+      if (fileRef.current) fileRef.current.value = "";
     }
   };
 
@@ -61,8 +62,8 @@ export default function AdminCatalogue() {
         <h1 className="font-heading text-2xl font-bold text-foreground">Catalogue</h1>
         <label className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg cursor-pointer hover:opacity-90 transition-opacity font-body text-sm font-medium">
           <Upload className="w-4 h-4" />
-          {uploading ? "Uploading..." : "Upload PDF"}
-          <input type="file" accept=".pdf" className="hidden" onChange={handleUpload} disabled={uploading} />
+          {busy || uploading ? "Uploading..." : "Upload PDF"}
+          <input ref={fileRef} type="file" accept=".pdf" className="hidden" onChange={handleUpload} disabled={busy || uploading} />
         </label>
       </div>
 
@@ -77,14 +78,14 @@ export default function AdminCatalogue() {
           {catalogues.map((cat) => (
             <div key={cat.id} className="bg-card rounded-lg border border-border p-4 flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-foreground font-body">{cat.file_name || "Catalogue"}</p>
-                <p className="text-xs text-muted-foreground font-body">{new Date(cat.uploaded_at).toLocaleDateString()}</p>
+                <p className="text-sm font-medium text-foreground font-body">{cat.title}</p>
+                <p className="text-xs text-muted-foreground font-body">{new Date(cat.created_at).toLocaleDateString()}</p>
               </div>
               <div className="flex gap-2">
-                <a href={cat.file_url} target="_blank" rel="noopener noreferrer">
+                <a href={apiUrl(cat.file_url)} target="_blank" rel="noopener noreferrer">
                   <Button variant="outline" size="sm"><Download className="w-4 h-4" /></Button>
                 </a>
-                <Button variant="ghost" size="sm" onClick={() => deleteCatalogue.mutate({ id: cat.id, file_url: cat.file_url })}>
+                <Button variant="ghost" size="sm" onClick={() => deleteCat.mutate(cat.id)}>
                   <Trash2 className="w-4 h-4 text-destructive" />
                 </Button>
               </div>

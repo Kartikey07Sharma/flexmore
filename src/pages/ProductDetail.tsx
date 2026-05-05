@@ -2,6 +2,7 @@ import { useParams, Link } from "react-router-dom";
 import { ArrowLeft, MessageSquare, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import PublicLayout from "@/components/PublicLayout";
+import { Seo } from "@/components/Seo";
 import { useProduct, useCategories, useProductImages } from "@/hooks/use-products";
 import productsElasticImg from "@/assets/products-elastic.jpg";
 
@@ -31,11 +32,24 @@ export default function ProductDetail() {
   }
 
   const category = categories.find((c) => c.id === product.category_id);
-  const mainImage = images.length > 0 ? images[0].image_url : productsElasticImg;
+  const mainImage = images.length > 0 ? images[0].url : productsElasticImg;
   const specs = (product.specifications || {}) as Record<string, string>;
 
   return (
     <PublicLayout>
+      <Seo
+        title={`${product.name} — Flexmore`}
+        description={product.short_description || product.description?.slice(0, 160)}
+        type="article"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "Product",
+          name: product.name,
+          description: product.short_description || product.description,
+          image: product.primary_image || undefined,
+          brand: { "@type": "Brand", name: "Flexmore" },
+        }}
+      />
       <section className="section-padding">
         <div className="container-wide">
           <Link to="/products" className="inline-flex items-center text-sm text-muted-foreground hover:text-primary mb-8 font-body">
@@ -50,7 +64,7 @@ export default function ProductDetail() {
                 <div className="grid grid-cols-4 gap-2">
                   {images.slice(1).map((img) => (
                     <div key={img.id} className="aspect-square rounded overflow-hidden border border-border">
-                      <img src={img.image_url} alt="" className="w-full h-full object-cover" />
+                      <img src={img.url} alt="" className="w-full h-full object-cover" />
                     </div>
                   ))}
                 </div>

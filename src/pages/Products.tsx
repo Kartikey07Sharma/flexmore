@@ -4,6 +4,7 @@ import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import PublicLayout from "@/components/PublicLayout";
+import { Seo } from "@/components/Seo";
 import ProductCard from "@/components/ProductCard";
 import { useProducts, useCategories } from "@/hooks/use-products";
 
@@ -24,6 +25,7 @@ export default function Products() {
 
   return (
     <PublicLayout>
+      <Seo title="Products — Flexmore Elastic & Threads" description="Browse Flexmore's catalog of elastic cords, mask dori, and industrial threads." />
       <section className="bg-primary py-16 md:py-24">
         <div className="container-wide px-4 md:px-8 text-center">
           <h1 className="font-heading text-4xl md:text-5xl font-bold text-primary-foreground mb-4">Our Products</h1>

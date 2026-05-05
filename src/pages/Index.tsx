@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { ArrowRight, CheckCircle, Factory, Users, Award, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import PublicLayout from "@/components/PublicLayout";
+import { Seo } from "@/components/Seo";
 import ProductCard from "@/components/ProductCard";
 import { useFeaturedProducts, useCategories } from "@/hooks/use-products";
 import { useBlogPosts } from "@/hooks/use-blog";
@@ -41,6 +42,17 @@ export default function Index() {
 
   return (
     <PublicLayout>
+      <Seo
+        title="Flexmore — B2B Elastic Cords, Mask Dori & Threads | Dehradun"
+        description="Flexmore manufactures premium elastic cords, mask dori and industrial threads in Dehradun, India. Request a quote for bulk orders."
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          name: "Flexmore",
+          url: typeof window !== "undefined" ? window.location.origin : "",
+          address: { "@type": "PostalAddress", addressLocality: "Dehradun", addressCountry: "IN" },
+        }}
+      />
       {/* Hero */}
       <section className="relative min-h-[85vh] flex items-center">
         <div className="absolute inset-0">

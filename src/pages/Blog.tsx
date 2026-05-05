@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import PublicLayout from "@/components/PublicLayout";
+import { Seo } from "@/components/Seo";
 import { useBlogPosts } from "@/hooks/use-blog";
 
 const fadeUp = { hidden: { opacity: 0, y: 30 }, visible: { opacity: 1, y: 0, transition: { duration: 0.6 } } };
@@ -10,6 +11,7 @@ export default function Blog() {
 
   return (
     <PublicLayout>
+      <Seo title="Blog — Flexmore" description="Insights on textile manufacturing, elastic cords, and B2B sourcing." />
       <section className="bg-primary py-16 md:py-24">
         <div className="container-wide px-4 md:px-8 text-center">
           <h1 className="font-heading text-4xl md:text-5xl font-bold text-primary-foreground mb-4">Industry Insights</h1>

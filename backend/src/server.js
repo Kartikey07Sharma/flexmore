@@ -16,6 +16,7 @@ import inquiryRoutes from './routes/inquiry.routes.js';
 import catalogueRoutes from './routes/catalogue.routes.js';
 import settingsRoutes from './routes/settings.routes.js';
 import uploadRoutes from './routes/upload.routes.js';
+import seoRoutes from './routes/seo.routes.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -42,6 +43,7 @@ app.use('/api/inquiries', inquiryRoutes);
 app.use('/api/catalogues', catalogueRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/uploads', uploadRoutes);
+app.use('/', seoRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

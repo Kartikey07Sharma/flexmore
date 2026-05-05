@@ -1,6 +1,7 @@
 import { useParams, Link } from "react-router-dom";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import PublicLayout from "@/components/PublicLayout";
+import { Seo } from "@/components/Seo";
 import { useBlogPost } from "@/hooks/use-blog";
 
 export default function BlogArticle() {
@@ -28,6 +29,7 @@ export default function BlogArticle() {
 
   return (
     <PublicLayout>
+      <Seo title={`${post.title} — Flexmore Blog`} description={post.excerpt} type="article" image={post.image} />
       <article className="section-padding">
         <div className="container-wide max-w-3xl">
           <Link to="/blog" className="inline-flex items-center text-sm text-muted-foreground hover:text-primary mb-8 font-body">
