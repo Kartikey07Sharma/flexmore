@@ -2,6 +2,7 @@ import { useParams, Link } from "react-router-dom";
 import { ArrowLeft, MessageSquare, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import PublicLayout from "@/components/PublicLayout";
+import { Seo } from "@/components/Seo";
 import { useProduct, useCategories, useProductImages } from "@/hooks/use-products";
 import productsElasticImg from "@/assets/products-elastic.jpg";
 
@@ -36,6 +37,19 @@ export default function ProductDetail() {
 
   return (
     <PublicLayout>
+      <Seo
+        title={`${product.name} — Flexmore`}
+        description={product.short_description || product.description?.slice(0, 160)}
+        type="article"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "Product",
+          name: product.name,
+          description: product.short_description || product.description,
+          image: product.primary_image || undefined,
+          brand: { "@type": "Brand", name: "Flexmore" },
+        }}
+      />
       <section className="section-padding">
         <div className="container-wide">
           <Link to="/products" className="inline-flex items-center text-sm text-muted-foreground hover:text-primary mb-8 font-body">
