@@ -3,23 +3,20 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import AdminLayout from "./AdminLayout";
-import { supabase } from "@/integrations/supabase/client";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { api } from "@/lib/api";
+
+interface SettingRow { key: string; value: string }
 
 export default function AdminSettings() {
   const { toast } = useToast();
   const qc = useQueryClient();
   const [editing, setEditing] = useState(false);
-  const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<Record<string, string>>({});
 
   const { data: settings = [] } = useQuery({
     queryKey: ["company-settings"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("company_settings").select("*");
-      if (error) throw error;
-      return data;
-    },
+    queryFn: () => api<SettingRow[]>("/api/settings", { auth: false }),
   });
 
   useEffect(() => {
@@ -28,21 +25,16 @@ export default function AdminSettings() {
     setForm(map);
   }, [settings]);
 
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      for (const [key, value] of Object.entries(form)) {
-        await supabase.from("company_settings").update({ value }).eq("key", key);
-      }
+  const save = useMutation({
+    mutationFn: (settings: Record<string, string>) =>
+      api("/api/settings", { method: "PUT", body: JSON.stringify({ settings }) }),
+    onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["company-settings"] });
       toast({ title: "Settings saved" });
       setEditing(false);
-    } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
-    } finally {
-      setSaving(false);
-    }
-  };
+    },
+    onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
+  });
 
   const settingsDisplay = [
     { key: "company_name", label: "Company Name" },
@@ -63,7 +55,9 @@ export default function AdminSettings() {
           ) : (
             <div className="flex gap-2">
               <Button variant="outline" size="sm" onClick={() => setEditing(false)}>Cancel</Button>
-              <Button size="sm" onClick={handleSave} disabled={saving}>{saving ? "Saving..." : "Save"}</Button>
+              <Button size="sm" onClick={() => save.mutate(form)} disabled={save.isPending}>
+                {save.isPending ? "Saving..." : "Save"}
+              </Button>
             </div>
           )}
         </div>
